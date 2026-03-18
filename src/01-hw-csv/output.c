@@ -51,7 +51,7 @@ void outputTable(FILE* outputFile, Table* table, size_t columnCount, const size_
                 } else {
                     fprintf(outputFile, " %*s ", lenColumn, "");
                 }
-                if (*endValue == '\0') {
+                if (endValue != NULL && *endValue == '\0') {
                     fprintf(outputFile, " %*s |", lenColumn, token);
                 } else {
                     fprintf(outputFile, " %-*s |", lenColumn, token);
