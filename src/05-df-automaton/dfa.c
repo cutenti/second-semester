@@ -1,24 +1,9 @@
 #include "dfa.h"
 #include "ctype.h"
 
-static int numTransitions; // число возможных переходов
-static Transition* transitions; // массив переходов
-static int numAcceptingStates; // число допускающих состояний
-static int* acceptingStates; // массив допускающих состояний
-static int startState; // стартовое состояние
-
-void dfaInit(int n, Transition* trans, int m, int* accepting, int start)
+bool dfaCheck(const DFA* dfa, const char* string)
 {
-    numTransitions = n;
-    transitions = trans;
-    numAcceptingStates = m;
-    acceptingStates = accepting;
-    startState = start;
-}
-
-bool dfaCheck(const char* string)
-{
-    int state = startState;
+    int state = dfa->startState;
 
     for (const char* p = string; *p; p++) {
         char symbol = *p;
@@ -26,9 +11,9 @@ bool dfaCheck(const char* string)
         symbol = isdigit(symbol) ? 'd' : symbol;
 
         int nextState = -1;
-        for (int i = 0; i < numTransitions; i++) {
-            if (transitions[i].from == state && transitions[i].symbol == symbol) {
-                nextState = transitions[i].to;
+        for (int i = 0; i < dfa->numTransitions; i++) {
+            if (dfa->transitions[i].from == state && dfa->transitions[i].symbol == symbol) {
+                nextState = dfa->transitions[i].to;
                 break;
             }
         }
@@ -39,12 +24,9 @@ bool dfaCheck(const char* string)
         state = nextState;
     }
 
-    bool isAccepting = false;
-    for (int i = 0; i < numAcceptingStates; i++) {
-        if (acceptingStates[i] == state) {
-            isAccepting = true;
-            break;
-        }
+    for (int i = 0; i < dfa->numAccepting; i++) {
+        if (dfa->acceptingStates[i] == state)
+            return true;
     }
-    return isAccepting;
+    return false;
 }

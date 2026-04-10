@@ -22,23 +22,23 @@ int main(void)
         { 6, 'd', 7 },
         { 7, 'd', 7 }
     };
-    int numTransitions = sizeof(transitions) / sizeof(transitions[0]);
 
     int accepting[] = { 2, 4, 7 };
-    int numAccepting = sizeof(accepting) / sizeof(accepting[0]);
 
-    int startState = 0;
-
-    dfaInit(numTransitions, transitions, numAccepting, accepting, startState);
+    DFA dfa = {
+        .numTransitions = sizeof(transitions) / sizeof(transitions[0]),
+        .transitions = transitions,
+        .numAccepting = sizeof(accepting) / sizeof(accepting[0]),
+        .acceptingStates = accepting,
+        .startState = 0
+    };
 
     char input[128];
     printf("Введите проверяемую строку:\n");
     fgets(input, sizeof(input), stdin);
-    size_t len = strlen(input);
-    if (len > 0 && input[len - 1] == '\n')
-        input[len - 1] = '\0';
+    input[strcspn(input, "\n")] = '\0';
 
-    if (dfaCheck(input)) {
+    if (dfaCheck(&dfa, input)) {
         printf("Это число!\n");
     } else {
         printf("Это не число :(\n");
