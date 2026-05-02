@@ -1,9 +1,10 @@
-#include "AVLTree.h"
+#include "dictionary.h"
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
-void consolWork(const char* filename, AVLTree* tree);
+void executeRepl(const char* filename, Dictionary* tree);
 
 int main(int argc, char* argv[])
 {
@@ -12,16 +13,16 @@ int main(int argc, char* argv[])
         return 1;
     }
 
-    AVLTree* tree = newTree();
+    Dictionary* tree = newDictionary();
     if (tree == NULL) {
-        perror("calloc in newTree");
+        perror("calloc in newDictionary");
         return 1;
     }
 
     FILE* airports = fopen(argv[1], "r");
     if (airports == NULL) {
         perror("fopen");
-        free(tree);
+        deleteTree(tree);
         return 1;
     }
 
@@ -30,12 +31,18 @@ int main(int argc, char* argv[])
 
     while (getline(&line, &lineSize, airports) != -1) {
         line[strcspn(line, "\n")] = '\0';
+        char* colon = strchr(line, ':');
+        if (!colon)
+            continue;
+        *colon = '\0';
+        const char* code = line;
+        const char* name = colon + 1;
 
-        if (insertNode(line, tree)) {
-            perror("insertNode");
+        if (addAirport(code, name, tree)) {
+            perror("addAirport");
             free(line);
             fclose(airports);
-            free(tree);
+            deleteTree(tree);
             return 1;
         }
     }
@@ -44,24 +51,24 @@ int main(int argc, char* argv[])
         perror("getline");
         free(line);
         fclose(airports);
-        free(tree);
+        deleteTree(tree);
         return 1;
     }
     free(line);
     fclose(airports);
 
-    consolWork(argv[1], tree);
+    executeRepl(argv[1], tree);
 
-    free(tree);
+    deleteTree(tree);
     return 0;
 }
 
-void consolWork(const char* filename, AVLTree* tree)
+void executeRepl(const char* filename, Dictionary* tree)
 {
     char line[200];
-    printf("Загружено %d аэропортов. Система готова к работе.\n", tree->number);
+    printf("Загружено %d аэропортов. Система готова к работе.\n", getTreeSize(tree));
 
-    while (1) {
+    while (true) {
         printf("> ");
         if (!fgets(line, sizeof(line), stdin))
             break;
@@ -86,20 +93,26 @@ void consolWork(const char* filename, AVLTree* tree)
             }
         } else if (strcmp(command, "add") == 0) {
             char* arg = strtok(NULL, "");
-            if (!arg || !strchr(arg, ':')) {
+            if (!arg) {
                 printf("Usage: add <IATA>:<Name>\n");
                 continue;
             }
 
-            char code[4] = { 0 };
-            strncpy(code, arg, 3);
-            code[3] = '\0';
+            char* colon = strchr(arg, ':');
+            if (!colon) {
+                printf("Format: IATA:Name\n");
+                continue;
+            }
+
+            *colon = '\0';
+            char* code = arg;
+            const char* name = colon + 1;
 
             if (find(code, tree)) {
                 printf("Аэропорт с кодом '%s' уже существует.\n", code);
                 continue;
             }
-            if (insertNode(arg, tree) == 0) {
+            if (addAirport(code, name, tree) == 0) {
                 printf("Аэропорт '%s' добавлен в базу.\n", code);
             } else {
                 printf("Ошибка при добавлении аэропорта '%s'.\n", code);
@@ -114,7 +127,7 @@ void consolWork(const char* filename, AVLTree* tree)
                 printf("Аэропорт с кодом '%s' не найден в базе.\n", code);
                 continue;
             }
-            deleteNode(code, tree);
+            removeAirport(code, tree);
             printf("Аэропорт '%s' удалён из базы.\n", code);
         } else if (strcmp(command, "save") == 0) {
             FILE* out = fopen(filename, "w");
@@ -123,7 +136,7 @@ void consolWork(const char* filename, AVLTree* tree)
                 continue;
             }
             if (save(out, tree) == 0) {
-                printf("База сохранена: %d аэропортов.\n", tree->number);
+                printf("База сохранена: %d аэропортов.\n", getTreeSize(tree));
             } else {
                 printf("Ошибка сохранения.\n");
             }
