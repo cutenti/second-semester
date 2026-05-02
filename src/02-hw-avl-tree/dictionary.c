@@ -21,7 +21,7 @@ Dictionary* newDictionary(void)
     return calloc(1, sizeof(Dictionary));
 }
 
-int getTreeSize(const Dictionary* tree)
+int getDictionarySize(const Dictionary* tree)
 {
     return tree ? tree->number : 0;
 }
@@ -225,7 +225,7 @@ static void freeNodes(Node* node)
     free(node);
 }
 
-void deleteTree(Dictionary* tree)
+void deleteDictionary(Dictionary* tree)
 {
     if (!tree)
         return;

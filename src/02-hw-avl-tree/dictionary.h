@@ -8,7 +8,7 @@ typedef struct Dictionary Dictionary;
 Dictionary* newDictionary(void);
 
 // Returns number of airports in tree
-int getTreeSize(const Dictionary* tree);
+int getDictionarySize(const Dictionary* tree);
 
 // Inserts airport into tree. Returns 0 on success, 1 on failure
 int addAirport(const char* code, const char* name, Dictionary* tree);
@@ -23,4 +23,4 @@ const char* find(const char* code, Dictionary* tree);
 int save(FILE* file, Dictionary* tree);
 
 // Frees all memory used by tree
-void deleteTree(Dictionary* tree);
+void deleteDictionary(Dictionary* tree);

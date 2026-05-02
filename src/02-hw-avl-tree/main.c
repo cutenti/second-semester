@@ -22,7 +22,7 @@ int main(int argc, char* argv[])
     FILE* airports = fopen(argv[1], "r");
     if (airports == NULL) {
         perror("fopen");
-        deleteTree(tree);
+        deleteDictionary(tree);
         return 1;
     }
 
@@ -42,7 +42,7 @@ int main(int argc, char* argv[])
             perror("addAirport");
             free(line);
             fclose(airports);
-            deleteTree(tree);
+            deleteDictionary(tree);
             return 1;
         }
     }
@@ -51,7 +51,7 @@ int main(int argc, char* argv[])
         perror("getline");
         free(line);
         fclose(airports);
-        deleteTree(tree);
+        deleteDictionary(tree);
         return 1;
     }
     free(line);
@@ -59,14 +59,14 @@ int main(int argc, char* argv[])
 
     executeRepl(argv[1], tree);
 
-    deleteTree(tree);
+    deleteDictionary(tree);
     return 0;
 }
 
 void executeRepl(const char* filename, Dictionary* tree)
 {
     char line[200];
-    printf("Загружено %d аэропортов. Система готова к работе.\n", getTreeSize(tree));
+    printf("Загружено %d аэропортов. Система готова к работе.\n", getDictionarySize(tree));
 
     while (true) {
         printf("> ");
@@ -136,7 +136,7 @@ void executeRepl(const char* filename, Dictionary* tree)
                 continue;
             }
             if (save(out, tree) == 0) {
-                printf("База сохранена: %d аэропортов.\n", getTreeSize(tree));
+                printf("База сохранена: %d аэропортов.\n", getDictionarySize(tree));
             } else {
                 printf("Ошибка сохранения.\n");
             }
