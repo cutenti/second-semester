@@ -1,12 +1,18 @@
 #include "dynamicTable.h"
 
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
+typedef struct Table {
+    char** lines;
+    size_t lineCount;
+    size_t capacity;
+} Table;
+
 Table* tableInit(void)
 {
-    Table* table = calloc(1, sizeof(Table));
-    return table;
+    return calloc(1, sizeof(Table));
 }
 
 int addLine(Table* table, const char* line)
@@ -15,10 +21,10 @@ int addLine(Table* table, const char* line)
         return 1;
 
     size_t lineLength = strlen(line);
-    size_t needSize = table->lineCount + 1;
+    size_t neededSize = table->lineCount + 1;
 
-    if (needSize > table->capacity) {
-        size_t newCapacity = table->lineCount * 2 < needSize ? needSize : table->lineCount * 2;
+    if (neededSize > table->capacity) {
+        size_t newCapacity = table->lineCount * 2 < neededSize ? neededSize : table->lineCount * 2;
 
         char** newLines = realloc(table->lines, newCapacity * sizeof(char*));
         if (!newLines) {
@@ -39,8 +45,35 @@ int addLine(Table* table, const char* line)
     return 0;
 }
 
+size_t tableCountColumns(const char* line)
+{
+    if (!line)
+        return 0;
+    size_t count = 1;
+    for (size_t i = 0; line[i]; i++) {
+        if (line[i] == ',')
+            count++;
+    }
+    return count;
+}
+
+size_t tableGetLineCount(const Table* table)
+{
+    return table ? table->lineCount : 0;
+}
+
+const char* tableGetLine(const Table* table, size_t index)
+{
+    if (!table || index >= table->lineCount)
+        return NULL;
+    return table->lines[index];
+}
+
 void tableFree(Table* table)
 {
+    if (!table)
+        return;
+
     for (size_t i = 0; i < table->lineCount; i++) {
         free(table->lines[i]);
     }

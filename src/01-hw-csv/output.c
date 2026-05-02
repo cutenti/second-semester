@@ -4,72 +4,75 @@
 #include <stdlib.h>
 #include <string.h>
 
-void outputTable(FILE* outputFile, Table* table, size_t columnCount, const size_t* lenColumns)
+static void printSeparator(FILE* out, size_t colCount, const size_t* widths, char symbol)
 {
-    size_t lineCount = table->lineCount;
-
-    for (size_t iLine = 0; iLine < lineCount; iLine++) {
-        char* line = table->lines[iLine];
-        char* separatedLine[columnCount];
-        for (size_t i = 0; i < columnCount; i++) {
-            separatedLine[i] = NULL;
-        }
-
-        char* token = strtok(line, ",\n");
-        for (size_t i = 0; i < columnCount; i++) {
-            if (token)
-                separatedLine[i] = token;
-            token = strtok(NULL, ",\n");
-        }
-
-        for (size_t iToken = 0; iToken < columnCount; iToken++) {
-            size_t lenColumn = lenColumns[iToken];
-            fputc('+', outputFile);
-
-            if (iLine == 0 || iLine == 1) {
-                for (size_t i = 0; i < lenColumn + 2; i++)
-                    fputc('=', outputFile);
-            } else {
-                for (size_t i = 0; i < lenColumn + 2; i++)
-                    fputc('-', outputFile);
-            }
-        }
-        fputc('+', outputFile);
-        fputc('\n', outputFile);
-
-        fputc('|', outputFile);
-        for (size_t iToken = 0; iToken < columnCount; iToken++) {
-            token = separatedLine[iToken];
-            int lenColumn = (int)lenColumns[iToken];
-
-            if (iLine == 0) {
-                fprintf(outputFile, " %-*s |", lenColumn, token);
-            } else {
-                char* endValue = NULL;
-                if (token) {
-                    strtod(token, &endValue); // преобразование в число, указатель на конец считывания числа
-                } else {
-                    fprintf(outputFile, " %*s ", lenColumn, "");
-                }
-                if (endValue != NULL && *endValue == '\0') {
-                    fprintf(outputFile, " %*s |", lenColumn, token);
-                } else {
-                    fprintf(outputFile, " %-*s |", lenColumn, token);
-                }
-            }
-        }
-        fputc('\n', outputFile);
-
-        if (iLine == lineCount - 1) {
-            for (size_t iToken = 0; iToken < columnCount; iToken++) {
-                size_t lenColumn = lenColumns[iToken];
-                fputc('+', outputFile);
-
-                for (size_t i = 0; i < lenColumn + 2; i++) {
-                    fputc('-', outputFile);
-                }
-            }
-            fputc('+', outputFile);
+    for (size_t i = 0; i < colCount; i++) {
+        fputc('+', out);
+        for (size_t j = 0; j < widths[i] + 2; j++) {
+            fputc(symbol, out);
         }
     }
+    fprintf(out, "+\n");
+}
+
+static void printCell(FILE* out, const char* token, size_t width, int isHeader)
+{
+    if (!token) {
+        fprintf(out, " %*s |", (int)width, "");
+        return;
+    }
+
+    char* endPtr;
+    strtod(token, &endPtr);
+    int isNumeric = (token[0] != '\0' && (*endPtr == '\0' || *endPtr == '\n' || *endPtr == '\r'));
+
+    if (isHeader || !isNumeric) {
+        fprintf(out, " %-*s |", (int)width, token);
+    } else {
+        fprintf(out, " %*s |", (int)width, token);
+    }
+}
+
+void outputTable(FILE* out, Table* table, size_t colCount, const size_t* widths)
+{
+    size_t rowCount = tableGetLineCount(table);
+
+    for (size_t i = 0; i < rowCount; i++) {
+        char* lineCopy = strdup(tableGetLine(table, i));
+
+        char separateChar = (i == 0 || i == 1) ? '=' : '-';
+        printSeparator(out, colCount, widths, separateChar);
+
+        fputc('|', out);
+        char* token = strtok(lineCopy, ",\n\r");
+        for (size_t j = 0; j < colCount; j++) {
+            printCell(out, token, widths[j], i == 0);
+            token = strtok(NULL, ",\n\r");
+        }
+        fputc('\n', out);
+
+        if (i == rowCount - 1) {
+            printSeparator(out, colCount, widths, '-');
+        }
+        free(lineCopy);
+    }
+}
+
+size_t* calculateColumnWidths(Table* table, size_t colCount)
+{
+    size_t* widths = calloc(colCount, sizeof(size_t));
+    size_t rowCount = tableGetLineCount(table);
+
+    for (size_t i = 0; i < rowCount; i++) {
+        char* lineCopy = strdup(tableGetLine(table, i));
+        char* token = strtok(lineCopy, ",\n\r");
+        for (size_t j = 0; j < colCount && token; j++) {
+            size_t len = strlen(token);
+            if (len > widths[j])
+                widths[j] = len;
+            token = strtok(NULL, ",\n\r");
+        }
+        free(lineCopy);
+    }
+    return widths;
 }
