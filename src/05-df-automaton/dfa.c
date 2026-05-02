@@ -1,5 +1,49 @@
 #include "dfa.h"
 #include "ctype.h"
+#include <stdlib.h>
+
+typedef struct Transition {
+    int from;
+    char symbol;
+    int to;
+} Transition;
+
+typedef struct DFA {
+    int numTransitions;
+    const Transition* transitions;
+    int numAccepting;
+    const int* acceptingStates;
+    int startState;
+} DFA;
+
+DFA* dfaCreate(void)
+{
+    DFA* dfa = malloc(sizeof(DFA));
+    if (!dfa) {
+        return NULL;
+    }
+
+    static Transition transitions[] = {
+        { 0, 'd', 2 }, { 0, '.', 3 }, { 0, '-', 1 },
+        { 1, 'd', 2 }, { 1, '.', 3 },
+        { 2, 'd', 2 }, { 2, '.', 3 }, { 2, 'E', 5 },
+        { 3, 'd', 4 },
+        { 4, 'd', 4 }, { 4, 'E', 5 },
+        { 5, 'd', 7 }, { 5, '+', 6 }, { 5, '-', 6 },
+        { 6, 'd', 7 },
+        { 7, 'd', 7 }
+    };
+
+    static int accepting[] = { 2, 4, 7 };
+
+    dfa->numTransitions = sizeof(transitions) / sizeof(transitions[0]);
+    dfa->transitions = transitions;
+    dfa->numAccepting = sizeof(accepting) / sizeof(accepting[0]);
+    dfa->acceptingStates = accepting;
+    dfa->startState = 0;
+
+    return dfa;
+}
 
 bool dfaCheck(const DFA* dfa, const char* string)
 {
@@ -29,4 +73,9 @@ bool dfaCheck(const DFA* dfa, const char* string)
             return true;
     }
     return false;
+}
+
+void dfaDestroy(DFA* dfa)
+{
+    free(dfa);
 }

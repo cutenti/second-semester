@@ -4,45 +4,25 @@
 
 int main(void)
 {
-    Transition transitions[] = {
-        { 0, 'd', 2 },
-        { 0, '.', 3 },
-        { 0, '-', 1 },
-        { 1, 'd', 2 },
-        { 1, '.', 3 },
-        { 2, 'd', 2 },
-        { 2, '.', 3 },
-        { 2, 'E', 5 },
-        { 3, 'd', 4 },
-        { 4, 'd', 4 },
-        { 4, 'E', 5 },
-        { 5, 'd', 7 },
-        { 5, '+', 6 },
-        { 5, '-', 6 },
-        { 6, 'd', 7 },
-        { 7, 'd', 7 }
-    };
-
-    int accepting[] = { 2, 4, 7 };
-
-    DFA dfa = {
-        .numTransitions = sizeof(transitions) / sizeof(transitions[0]),
-        .transitions = transitions,
-        .numAccepting = sizeof(accepting) / sizeof(accepting[0]),
-        .acceptingStates = accepting,
-        .startState = 0
-    };
+    DFA* dfa = dfaCreate();
+    if (!dfa) {
+        perror("Failed to create DFA");
+        return 1;
+    }
 
     char input[128];
     printf("Введите проверяемую строку:\n");
-    fgets(input, sizeof(input), stdin);
-    input[strcspn(input, "\n")] = '\0';
 
-    if (dfaCheck(&dfa, input)) {
-        printf("Это число!\n");
-    } else {
-        printf("Это не число :(\n");
+    if (fgets(input, sizeof(input), stdin)) {
+        input[strcspn(input, "\n")] = '\0';
+
+        if (dfaCheck(dfa, input)) {
+            printf("Это число!\n");
+        } else {
+            printf("Это не число :(\n");
+        }
     }
 
+    dfaDestroy(dfa);
     return 0;
 }
